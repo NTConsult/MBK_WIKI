@@ -1,0 +1,26 @@
+ 1 - LIKED
+	- Reunião sobre pomodoro
+	- Aumento de produtividade visivel
+	- Projeto pegando velocidade
+	- Maior integração com o webservice
+	- Andamento do sprint
+	- App "Na Palma da Mão" mais avançado
+	- Ganho de performance
+	- Jira bem planejado / timeline adequado
+	- Trabalho feito para uma melhor organização
+	
+2 - Learned
+	- As vezes as coisas parecem mais dificeis do que são
+	- Manejar o Gradle para adicionar libraries (Iker / ANDROID)
+	- Mapas
+	- Criptografia
+	
+3 - Lacked
+	- "Faltou por minha parte organização para ver que os pagamentos estavam bagunçados" (Iker / ANDROID)
+
+4 - Longed to
+	- Auxiliar mais o android (William / iOS)
+	- Participar mais do webservice (William / iOS)
+	- Agilizar app "Na palma da mão"
+	- Não cair na autocomplacecia e manter o ritmo atual de trabalho do pomodoro (Iker / ANDROID)
+	- Tempo para começar a olhar versão melhor adaptada para tablets

@@ -1,0 +1,409 @@
+CDBRDB
+Saldo: Request lista papeis (tipo 1)
+	Consultar papeis:
+		- OP 070210
+		- Dentro de grupo requisicao, parametro tipo lista (saldo = 1) 
+			<req> ... <tipo lista> 1</tipo_lista> ... </req>
+
+		- Cada papel (Split por @), 
+		- informacoes do papel : (split por |)
+	        pp.descricao                = papel[1];
+	        pp.vlrMinimoAplicIni        = papel[3];
+	        pp.vlrMinimoAplicAdicional  = papel[4];
+	        pp.vlrMinResgate            = papel[5];
+	        pp.vlrMinPermFundo          = papel[6];
+	        pp.pubasemi                 = papel[7];
+	        pp.pu                       = papel[8];
+
+	Consultar Saldo:
+		- OP 070301
+		- 	(fora grupo requisicao) 
+			<grup_023> 
+				<par_116> desc. papel selecionado </par_116>
+		  	</grup_023>
+
+		- Tratar response (split)
+			<grup_001>
+			   <grup_003>
+			      <par_008>True</par_008>
+			      <par_009>1</par_009>
+			      <par_010>Opera&amp;ccedil;&amp;atilde;o efetuada com sucesso!</par_010>
+			   </grup_003>
+			   <grup_024>
+			      <par_355>0,00</par_355>
+			      <par_356>0,00</par_356>
+			      <par_357>0,00</par_357>
+			      <par_358>0,00</par_358>
+			      <par_020>0,00</par_020>
+			      <par_121>0,00</par_121>
+			      <par_120>0,00</par_120>
+			      <par_359>0,00</par_359>
+			      <par_360>0,00</par_360>
+			      <par_361>0,00</par_361>
+			   </grup_024>
+			</grup_001>
+
+
+Simulação: 
+	- Lista papeis tipo 1 (mesma listagem do saldo)
+	- Após seleção do papel, mostra dados do papel na tela, e exibe um campo de valor para simular a aplicação.
+
+	- Request simulação:  OP: 070302 (Todos os dados a serem enviados na somulação vêm do papel, menos o valor a ser aplicado, que devara ser passado)
+		NSString *group = Definicoes.ServicoWeb.NumGrupWs.Requisicao;
+
+		[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.codcarteira
+	                 withGrupo:group
+	                 withValor:papel.codCarteira];
+    
+    	[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.idpapel
+	                 withGrupo:group
+	                 withValor:papel.descricao];
+    
+    	[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.Valor
+	                 withGrupo:group
+	                 withValor:papel.valorAplicado];
+    
+    	[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.pu
+	                 withGrupo:group
+	                 withValor:papel.pu];
+
+Aplicação:
+	- Lista papeis tipo 1 (mesma listagem do saldo)
+	- Após seleção do papel, consultar saldo da conta corrente (pode cachear)- Exibir informações do papel e saldo da conta corrente (valor disponível para aplicação) na tela, e um campo para digitar o valor que deseja aplicar
+
+	- Request validação aplicacao: (operacao: 070212)
+
+	strOperation = Definicoes.ServicoWeb.OperacoesWs.CDBRDBValidarAplicacao;
+    
+    NSString *group = Definicoes.ServicoWeb.NumGrupWs.Requisicao;
+    
+    clsBaseCamadaNegocio *base = [[[clsBaseCamadaNegocio alloc] initWithDelegate:self] autorelease];
+    
+    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.codcarteira
+                 withGrupo:group
+                 withValor:papel.codCarteira];
+    
+    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.idpapel
+                 withGrupo:group
+                 withValor:papel.descricao];
+    
+    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.Valor
+                 withGrupo:group
+                 withValor:papel.valorAplicado];
+    
+    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.pu
+                 withGrupo:group
+                 withValor:papel.pu];
+    
+    [base ExecutarOperacao:strOperation
+                          :[clsSessaoUsuario sharedInstance]];
+
+   - Response: (grupo grup_031)
+   	NSString *grupo = Definicoes.ServicoWeb.NumGrupWs.infoaplicacao;
+    
+	    OperacaoPapel *op = [[[OperacaoPapel alloc] init] autorelease];
+	    
+	    op.historico = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.Historico withGrupo:grupo];
+	    op.saldoAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.saldoaplic withGrupo:grupo];
+	    op.valorMaximo = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.ValorMaximo withGrupo:grupo];
+	    op.valorMinimo = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.ValorMinimo withGrupo:grupo];
+	    op.valorMinimoAdic = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.valorminadic withGrupo:grupo];
+	    op.prazoMaximoDias = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.przmaxdias withGrupo:grupo];
+	    op.prazoMinimoDias = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.przmindias withGrupo:grupo];
+	    op.vencimentoPapel = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.venctopapel withGrupo:grupo];
+	    op.nsuAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.nsuaplic withGrupo:grupo];
+	    op.clit = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.clit withGrupo:grupo];
+	    op.dados = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dados withGrupo:grupo];
+	    op.quantidade = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.quantidade withGrupo:grupo];
+	    op.lista = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.lista withGrupo:grupo];
+	    op.vrnominal = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.vrnominal withGrupo:grupo];
+	    op.puDeIda = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.pudeida withGrupo:grupo];
+	    op.dataVencimentoAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dtvctoapl withGrupo:grupo];
+	    
+	    op.nsu = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.nsu withGrupo:grupo];
+
+	- Tela de validação: (apenas exibir as informações validadas)
+
+	- Request Confirmação aplicação: (operacao: 070402) / (grupo: grup_002 (grupo requisicao))
+			strOperation = [Definicoes.ServicoWeb.OperacoesWs.CDBRDBProcessarAplicacao copy];;
+	    
+	    NSString *group = Definicoes.ServicoWeb.NumGrupWs.Requisicao;
+	    
+	    clsBaseCamadaNegocio *base = [[[clsBaseCamadaNegocio alloc] initWithDelegate:self] autorelease];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.Historico
+	                 withGrupo:group
+	                 withValor:operacao.historico];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.saldoaplic
+	                 withGrupo:group
+	                 withValor:operacao.saldoAplicacao];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.ValorMaximo
+	                 withGrupo:group
+	                 withValor:operacao.valorMaximo];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.ValorMinimo
+	                 withGrupo:group
+	                 withValor:operacao.valorMinimo];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.valorminadic
+	                 withGrupo:group
+	                 withValor:operacao.valorMinimoAdic];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.przmaxdias
+	                 withGrupo:group
+	                 withValor:operacao.prazoMaximoDias];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.przmindias
+	                 withGrupo:group
+	                 withValor:operacao.prazoMinimoDias];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.venctopapel
+	                 withGrupo:group
+	                 withValor:operacao.vencimentoPapel];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.clit
+	                 withGrupo:group
+	                 withValor:operacao.clit];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.nsu
+	                 withGrupo:group
+	                 withValor:operacao.nsu];
+	    
+	    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.lista
+	                 withGrupo:group
+	                 withValor:operacao.lista];
+	    
+	    [base ExecutarOperacao:strOperation
+	                          :[clsSessaoUsuario sharedInstance]];
+
+	- Response: (mesmo response validacao de aplicacao) - Após confirmação da aplicação, exibe os dados da aplicação feita.
+		NSString *grupo = Definicoes.ServicoWeb.NumGrupWs.infoaplicacao: (historico, saldo, nsu aplicacao, data vencimento aplicacao)
+    
+	    OperacaoPapel *op = [[[OperacaoPapel alloc] init] autorelease];
+	    
+	    op.historico = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.Historico withGrupo:grupo];
+	    op.saldoAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.saldoaplic withGrupo:grupo];
+	    op.valorMaximo = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.ValorMaximo withGrupo:grupo];
+	    op.valorMinimo = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.ValorMinimo withGrupo:grupo];
+	    op.valorMinimoAdic = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.valorminadic withGrupo:grupo];
+	    op.prazoMaximoDias = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.przmaxdias withGrupo:grupo];
+	    op.prazoMinimoDias = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.przmindias withGrupo:grupo];
+	    op.vencimentoPapel = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.venctopapel withGrupo:grupo];
+	    op.nsuAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.nsuaplic withGrupo:grupo];
+	    op.clit = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.clit withGrupo:grupo];
+	    op.dados = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dados withGrupo:grupo];
+	    op.quantidade = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.quantidade withGrupo:grupo];
+	    op.lista = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.lista withGrupo:grupo];
+	    op.vrnominal = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.vrnominal withGrupo:grupo];
+	    op.puDeIda = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.pudeida withGrupo:grupo];
+	    op.dataVencimentoAplicacao = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dtvctoapl withGrupo:grupo];
+	    
+	    op.nsu = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.nsu withGrupo:grupo];
+
+   - Extrato CDB/RDB  (operação 070205) (Passar dados dentro do grupo requisicao 	)
+   	- Lista papeis tipo 1 (mesmos papeis do saldo)
+   	- Após selecionar o papel, deverá mostrar um campo de data inicial, e um campo de data final, e um botão de OK
+   	- REQUEST:
+
+   			strOperation = [Definicoes.ServicoWeb.OperacoesWs.CDBRDBConsultarExtratoPapel copy];
+			    
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.DataInicio
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:dataInicial];
+			    
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.DataFim
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:dataFinal];
+			    
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.codcarteira
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:papel.codCarteira];
+			    
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.idpapel
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:papel.descricao];
+			    
+			    // VALOR FIXO
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.rendimento
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:@"1"];
+
+			    // VALOR FIXO
+			    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.ope
+			                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+			                 withValor:@"-1"];
+
+      - Response: (Exibir na tela de extrato: Data. Histórico, Valor, Saldo e Rentabilidade)
+      			NSString *grup = Definicoes.ServicoWeb.NumGrupWs.infoextrato;
+    
+			    	ExtratoPapel *extrato = [[[ExtratoPapel alloc] init] autorelease];
+			    
+			    	extrato.descrPapel = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.papel
+			                                                 	withGrupo:grup];
+			    
+			    	extrato.deAte = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.periodo
+			                                            		withGrupo:grup];
+			    
+			    	extrato.dataGerado = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dataemissao
+			                                                 withGrupo:grup];
+			    
+			    	extrato.strFooter = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.rodape
+			                                               	withGrupo:grup];
+			    
+			    	extrato.strCorpo = [objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.dados
+			                                               withGrupo:grup];
+
+      - Cancelamento: Lista de papéis tipo 2: DIFERENTE DE LISTA PAPÉIS DE SALDO!!!!!
+
+      		** LISTA DE PAPEIS: ***** RETORNA TODAS AS APLICAÇÕES DE CADA PAPEL: Exibir uma tablea com os papeis separaodor por headers para cada papel, e ao lado de cada aplicação, exibir um checkbox para cancelamento.
+
+	      		- Request lista papeis: (SUBOPERACAO (tipo): 2)
+	      			strOperation = [Definicoes.ServicoWeb.OperacoesWs.CDBRDBConsultarListaPapeisNovo copy];
+	    
+						clsBaseCamadaNegocio *base = [[[clsBaseCamadaNegocio alloc] initWithDelegate:self] autorelease];
+	    
+					    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.tipolista
+					                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+					                 withValor:tipo];
+	    
+						[base ExecutarOperacao:strOperation :[clsSessaoUsuario sharedInstance]];
+
+				   - Response:
+				   	- Linhas: Split por @
+				   	- Colunas: Split por |
+
+				   	- Definição das colunas:
+				   		 p.codCarteira   = pplSpl[0];
+					        p.numOperacao   = pplSpl[1];
+					        p.descricao     = pplSpl[2];
+					        p.valorAplicado = pplSpl[3];
+					        p.dataAplicacao = pplSpl[4];
+					        p.NSUAut        = pplSpl[6];
+
+			   *** REQUEST CANCELAMENTO ***
+			   	- Exibir as aplicações selecionadas em uma tela de confirmação com um botão "Confirmar cancelamento". Após o cancelamento, exibir uma tela com as informações das aplicações canceladas e uma mensagem de sucesso.
+
+			   	- Cancelamento multiplo: (Operacoes: 070504) (Grupo requisicao)
+			   			Legenda: @ = Linha / | = Coluna
+
+			   			ENVIAR STRING NO PADRÃO: @codcarteira|idpapel|poperacao|nsuaut|valor@codcarteira|idpapel|poperacao|nsuaut|valor
+			   		Request:
+			   			 clsBaseCamadaNegocio *base = [[[clsBaseCamadaNegocio alloc] initWithDelegate:self] autorelease];
+    						lines = [ "codcarteira|idpapel|poperacao|nsuaut|valor" , "codcarteira|idpapel|poperacao|nsuaut|valor"]
+
+						    [base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.dados
+						                 withGrupo:Definicoes.ServicoWeb.NumGrupWs.Requisicao
+						                 withValor:[lines componentsJoinedByString:@"@"]]; // Faz join por: @
+
+						Response: 
+							[objNegocio.pacDados getValorItem:Definicoes.ServicoWeb.NumParWs.msgretorno
+                                  		      withGrupo:Definicoes.ServicoWeb.NumGrupWs.infocancelamento];
+   
+
+*** OUTRAS ***
+		- Caixa Postal:  (Lista (Inclui busca nos dados locais. a busca deve ser feita em todas as "colunas", Detalhe, Excluir)
+			*** - Tela de seleção e listagem serão as mesmas.
+
+		- REQUEST Exclusão: (Operacao: 090504) / Grupo: grup_053 (info mensagem)
+
+			for(...)
+			{
+				NSString *valor = [dict valueForKey:Definicoes.ServicoWeb.NumParWs.codigomsg];
+				[base.pacDados  AddItem:Definicoes.ServicoWeb.NumParWs.codigomsg 
+							  withGrupo:Definicoes.ServicoWeb.NumGrupWs.infomensagem 
+							  withValor:valor];
+			}
+		
+		- RESPONSE Exclusao: Apenas sucesso ou nao! Após a exclusão, apenas remover as linhas da tabela.
+
+	   - REQUEST LISTAGEM: (Operacao: 090502)
+	   	- Request simples, apenas enviar cabeçalho e operação.
+
+	   - RESPONSE LISTAGEM:
+	   	<?xml version="1.0" encoding="UTF-8"?>
+			<grup_001>
+			   <grup_003>
+			      <par_008>True</par_008>
+			      <par_009>2</par_009>
+			      <par_010>Você nao tem mensagens novas</par_010>
+			   </grup_003>
+			   <grup_054>
+			      <par_240>1</par_240> // Parametro a ser enviado na exclusao
+			      <par_241>Titulo</par_241>
+			      <par_242>Conteudo</par_242>
+			      <par_243>10/04/1990</par_243>
+			   </grup_054>
+			   <grup_054>
+			      <par_240>2</par_240> // Parametro a ser enviado na exclusao
+			      <par_241>Titulo</par_241>
+			      <par_242>Conteudo</par_242>
+			      <par_243>10/04/1990</par_243>
+			   </grup_054>
+			</grup_001>
+
+		- REQUEST DETALHE MENSAGEM: (Request simples:) Operacao: 090503
+				NSString *valor = [dict valueForKey:Definicoes.ServicoWeb.NumParWs.codigomsg];
+				[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.codigomsg 
+							    withGrupo:Definicoes.ServicoWeb.NumGrupWs.infomensagem withValor:valor];
+
+	   - RESPONSE DETALHE MENSAGEM:
+	   		<?xml version="1.0" encoding="UTF-8"?>
+				<grup_001>
+				   <grup_003>
+				      <par_008>True</par_008>
+				      <par_009>2</par_009>
+				      <par_010>Voc nao tem mensagens novas</par_010>
+				   </grup_003>
+				   <grup_054>
+				      <par_240>1</par_240>
+				      <par_241>Titulo</par_241>
+				      <par_242>Conteudo</par_242>
+				      <par_243>10/04/1990</par_243>
+				   </grup_054>
+				</grup_001>
+			   
+
+	  - REQUEST MUDA SENHA: REQUISICAO GENEREICA + (Operacao: 010500)
+	  		** EXIBIR UM CAMPO PEDINDO A NOVA SENHA, E CONFIRMAÇÃO DA NOVA SENHA.
+	  		-> 	NSString *grupoSenha = Definicoes.ServicoWeb.NumGrupWs.infosenha;
+
+					[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.novasenha
+									 withGrupo:grupoSenha withValor:strSenha];
+
+    				[base.pacDados AddItem:Definicoes.ServicoWeb.NumParWs.novasenhaconfirm 
+    								 withGrupo:grupoSenha withValor:strNovaSenha];
+
+    				XML:
+    				<grup_001>
+					   <grup_002>
+					      <par_011>APP00150002189380CC635146867850662223|I330394|S|N|01369138||F|10936912200|13778730215|635146867885805198</par_011>
+					      <par_003>CC</par_003>
+					      <par_004>0015</par_004>
+					      <par_005>0002105349</par_005>
+					      <par_001>010500</par_001>
+					   </grup_002>
+					   <grup_052>
+					      <par_238>87654321</par_238> // nova senha
+					      <par_239>87654321</par_239> // confirmacao nova senha
+					   </grup_052>
+					</grup_001>
+
+
+    	-> RESPONSE MUDA SENHA: 
+    			ERRO:
+    				<?xml version="1.0" encoding="UTF-8"?>
+					<grup_001>
+					   <grup_003>
+					      <par_008>False</par_008>
+					      <par_009>4</par_009>
+					      <par_010>Operação Indisponível</par_010>
+					   </grup_003>
+					</grup_001>
+
+
+
+
+
+
